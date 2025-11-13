@@ -6,10 +6,29 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct TripListView: View {
+    @Query private var trips: [Trip]
+    
     var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+        List(trips) { trip in
+            VStack(alignment: .leading, spacing: 4) {
+                Text(trip.name)
+                    .font(.headline)
+                Text(trip.destination)
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                HStack {
+                    Text(trip.startDate.formatted(date: .abbreviated, time: .omitted))
+                    Text("-")
+                    Text(trip.endDate.formatted(date: .abbreviated, time: .omitted))
+                }
+                .font(.caption)
+                .foregroundColor(.secondary)
+            }
+            .padding(.vertical, 2)
+        }
     }
 }
 

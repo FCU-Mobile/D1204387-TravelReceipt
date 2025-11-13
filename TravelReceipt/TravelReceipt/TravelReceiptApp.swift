@@ -15,7 +15,7 @@ struct TravelReceiptApp: App {
         let schema = Schema([
             Trip.self,
             Expense.self,
-            ExpenseCategory.self
+//            ExpenseCategory.self
         ])
         let modelConfiguration = ModelConfiguration(
             schema: schema,

@@ -71,6 +71,8 @@ struct EmptyStateView: View {
     }
 }
 
+
+
 #Preview {
     ContentView()
         .modelContainer(for: Trip.self, inMemory: true)

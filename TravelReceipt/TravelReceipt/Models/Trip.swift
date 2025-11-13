@@ -17,7 +17,7 @@ final class Trip {
     var endDate: Date
     var totalBudget: Double? = nil
     var notes: String? = nil
-    var tripID: String = UUID().uuidString // 識別碼
+    @Attribute(.unique) var tripID: String = UUID().uuidString // 識別碼
     
     // 一對多關聯：一個行程可以有多筆支出
     @Relationship(deleteRule: .cascade, inverse: \Expense.trip)
@@ -37,6 +37,25 @@ final class Trip {
         self.totalBudget = totalBudget
         self.notes = notes
     }
+    
+    // === 計算屬性 ===
+    var totalExpenses: Double {
+        return expenses.reduce(0) { $0 + $1.amount }
+    }
+    
+    var durationInDays: Int {
+        let calendar = Calendar.current
+        let components = calendar.dateComponents([.day], from: startDate, to: endDate)
+        return (components.day ?? 0) + 1 // 包含開始和結束日期
+    }
+    
+    func addExpense(_ expense: Expense) {
+        expenses.append(expense)
+        expense.trip = self
+    }
+        
+    
+    
 }
     
     

@@ -27,7 +27,9 @@ final class Expense {
     var isManuallyVerified: Bool = false // 使用者是否手動修正過AI辨識結果
     
     // === 關聯 ===
+    @Relationship(deleteRule: .nullify)
     var trip: Trip?
+    
     var category: String? = nil
     
     // === 計算屬性 ===
