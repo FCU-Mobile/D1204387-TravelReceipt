@@ -33,6 +33,15 @@ struct AddExpenseView: View {
         return true
     }
     
+        // ✅ 檢查日期是否在行程範圍內
+    private var isDateOutOfRange: Bool {
+        let calendar = Calendar.current
+        let expenseDay = calendar.startOfDay(for: date)
+        let tripStart = calendar.startOfDay(for: trip.startDate)
+        let tripEnd = calendar.startOfDay(for: trip.endDate)
+        return expenseDay < tripStart || expenseDay > tripEnd
+    }
+    
     var body: some View {
         NavigationStack {
             Form {
@@ -57,24 +66,36 @@ struct AddExpenseView: View {
                 Section("分類") {
                     Picker("選擇分類", selection: $category) {
                         ForEach(ExpenseCategory.allCases, id: \.self) { cat in
-                            HStack {
-                                Text(cat.icon)
-                                Text(cat.displayName)
-                            }
-                            .tag(cat)
+                            Text("\(cat.icon) \(cat.displayName)")
+                                .tag(cat)
                         }
                     }
                     .pickerStyle(.menu)
                 }
                 
                     // MARK: - 詳細資訊
-                Section("詳細資訊") {
+                Section {
                     DatePicker("日期", selection: $date, displayedComponents: .date)
+                    
+                        // ✅ 日期超出範圍時顯示警告
+                    if isDateOutOfRange {
+                        HStack {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .foregroundStyle(.yellow)
+                            Text("費用日期不在行程期間內")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
                     
                     TextField("商家名稱", text: $storeName)
                     
                     TextField("備註（選填）", text: $notes, axis: .vertical)
                         .lineLimit(3...5)
+                } header: {
+                    Text("詳細資訊")
+                } footer: {
+                    Text("行程期間：\(trip.startDate.formatted(date: .abbreviated, time: .omitted)) — \(trip.endDate.formatted(date: .abbreviated, time: .omitted))")
                 }
             }
             .navigationTitle("新增費用")
@@ -111,8 +132,6 @@ struct AddExpenseView: View {
         )
         
         modelContext.insert(expense)
-        
-            // 加入到 trip 的 expenses
         trip.addExpense(expense)
         
         dismiss()
