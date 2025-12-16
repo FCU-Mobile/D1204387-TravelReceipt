@@ -35,25 +35,25 @@ struct ContentView: View {
                     }
                 }
             }
-                
-                Tab("統計", systemImage: "chart.pie") {
-                    NavigationStack {
-                        StatisticsView()
-                    }
-                }
-                Tab("設定", systemImage: "gear") {
-                    NavigationStack {
-                        SettingsView()
-                    }
+            
+            Tab("統計", systemImage: "chart.pie") {
+                NavigationStack {
+                    StatisticsView()
                 }
             }
-            .sheet(isPresented: $showingAddTrip) {
-                AddTripView()
+            Tab("設定", systemImage: "gear") {
+                NavigationStack {
+                    SettingsView()
+                }
             }
         }
+        .sheet(isPresented: $showingAddTrip) {
+            AddTripView()
+        }
     }
+}
     
-    struct EmptyStateView: View {
+struct EmptyStateView: View {
         var body: some View {
             VStack(spacing: 20) {
                 Image(systemName: "airplane")
@@ -74,7 +74,7 @@ struct ContentView: View {
         }
     }
     
-    #Preview {
+#Preview {
         ContentView()
             .modelContainer(try! ModelContainer(for: Trip.self, Expense.self, configurations: ModelConfiguration(isStoredInMemoryOnly: true)))
-    }
+}

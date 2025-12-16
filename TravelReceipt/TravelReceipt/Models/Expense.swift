@@ -11,10 +11,11 @@ import SwiftData
 @Model
 final class Expense {
     var id: UUID = UUID()
-    var amount: Double
-    var currency: String
-    var date: Date
+    var amount: Double = 0.0
+    var currency: String?
+    var date: Date = Date()
     var notes: String? = nil
+    var createdAt: Date = Date()
     
     // === 憑證相關 ===
     var receiptImage: Data? = nil // 儲存憑證圖片的二進位資料
@@ -27,10 +28,22 @@ final class Expense {
     var aiDetectionDate: Date? = nil // AI辨識的日期時間
     var isManuallyVerified: Bool = false // 使用者是否手動修正過AI辨識結果
     
-    var trip: Trip?
-    var category: String? = nil
+    @Relationship(deleteRule: .nullify) var trip: Trip? = nil
+    
+    var category: ExpenseCategory = ExpenseCategory.miscellaneous
        
-    init(amount: Double, currency: String = "TWD", date: Date, storeName: String? = nil, itemName: String? = nil, itemQuantity: Int? = nil, notes: String? = nil, receiptImage: Data? = nil, trip: Trip? = nil, category: String? = nil) {
+    init(
+        amount: Double,
+        currency: String = "TWD",
+        date: Date = Date(),
+        storeName: String? = nil,
+        itemName: String? = nil,
+        itemQuantity: Int? = nil,
+        notes: String? = nil,
+        receiptImage: Data? = nil,
+        trip: Trip? = nil,
+        category: ExpenseCategory = .miscellaneous
+    ) {
         self.amount = amount
         self.currency = currency
         self.date = date
