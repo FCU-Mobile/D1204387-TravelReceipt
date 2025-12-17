@@ -190,11 +190,13 @@ struct AddExpenseView: View {
         // MARK: - Save Method
     private func saveExpense() {
         guard let amountValue = Double(amount) else { return }
+        print("📸 receiptImage: \(receiptImage != nil ? "有圖片" : "無圖片")")
         
             // ✅ 壓縮圖片並轉換為 Data
         var imageData: Data? = nil
         if let image = receiptImage {
             imageData = image.jpegData(compressionQuality: 0.7)
+            print("📸 imageData size: \(imageData?.count ?? 0) bytes")
         }
         
         let expense = Expense(
