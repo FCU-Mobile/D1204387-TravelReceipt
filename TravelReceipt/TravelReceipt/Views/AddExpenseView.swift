@@ -22,11 +22,16 @@ struct AddExpenseView: View {
     @State private var storeName: String = ""
     @State private var notes: String = ""
     
-        // ✅ 收據圖片
+        // 收據圖片
     @State private var receiptImage: UIImage? = nil
     @State private var showingImagePicker = false
     @State private var showingCamera = false
     @State private var showingPhotoSource = false
+    
+        // ✅ OCR 相關
+    @State private var isProcessingOCR = false
+    @State private var showingOCRResult = false
+    @State private var ocrResult: OCRResult? = nil
     
         // 常用貨幣
     private let currencies = ["TWD", "CNY", "JPY", "USD", "EUR", "HKD", "KRW"]
@@ -83,6 +88,20 @@ struct AddExpenseView: View {
                                 Label("拍照/選擇", systemImage: "photo.badge.plus")
                             }
                             
+                                // ✅ OCR 辨識按鈕
+                            if receiptImage != nil {
+                                Button(action: performOCR) {
+                                    if isProcessingOCR {
+                                        ProgressView()
+                                            .scaleEffect(0.8)
+                                    } else {
+                                        Label("AI 辨識", systemImage: "text.viewfinder")
+                                    }
+                                }
+                                .disabled(isProcessingOCR)
+                                .foregroundStyle(.orange)
+                            }
+                            
                             if receiptImage != nil {
                                 Button(role: .destructive, action: { receiptImage = nil }) {
                                     Label("移除照片", systemImage: "trash")
@@ -94,7 +113,11 @@ struct AddExpenseView: View {
                 } header: {
                     Text("收據照片")
                 } footer: {
-                    Text("選填，可拍照或從相簿選取收據")
+                    if receiptImage != nil {
+                        Text("點擊「AI 辨識」自動填入金額、日期、商家")
+                    } else {
+                        Text("選填，可拍照或從相簿選取收據")
+                    }
                 }
                 
                     // MARK: - 金額
@@ -184,19 +207,62 @@ struct AddExpenseView: View {
             .sheet(isPresented: $showingImagePicker) {
                 PhotoPicker(image: $receiptImage)
             }
+                // ✅ OCR 結果確認
+            .alert("辨識結果", isPresented: $showingOCRResult) {
+                Button("套用") {
+                    applyOCRResult()
+                }
+                Button("取消", role: .cancel) { }
+            } message: {
+                if let result = ocrResult {
+                    let amountText = result.amount != nil ? "金額：\(Int(result.amount!)) 元" : "金額：未辨識"
+                    let dateText = result.date != nil ? "日期：\(result.date!.formatted(date: .abbreviated, time: .omitted))" : "日期：未辨識"
+                    let storeText = result.storeName != nil ? "商家：\(result.storeName!)" : "商家：未辨識"
+                    Text("\(amountText)\n\(dateText)\n\(storeText)")
+                }
+            }
+        }
+    }
+    
+        // MARK: - OCR 辨識
+    private func performOCR() {
+        guard let image = receiptImage else { return }
+        
+        isProcessingOCR = true
+        
+        OCRService.recognizeText(from: image) { result in
+            isProcessingOCR = false
+            ocrResult = result
+            showingOCRResult = true
+            
+            print("📝 OCR 原始文字:\n\(result.rawText)")
+        }
+    }
+    
+        // MARK: - 套用 OCR 結果
+    private func applyOCRResult() {
+        guard let result = ocrResult else { return }
+        
+        if let ocrAmount = result.amount {
+            amount = String(format: "%.0f", ocrAmount)
+        }
+        
+        if let ocrDate = result.date {
+            date = ocrDate
+        }
+        
+        if let ocrStoreName = result.storeName {
+            storeName = ocrStoreName
         }
     }
     
         // MARK: - Save Method
     private func saveExpense() {
         guard let amountValue = Double(amount) else { return }
-        print("📸 receiptImage: \(receiptImage != nil ? "有圖片" : "無圖片")")
         
-            // ✅ 壓縮圖片並轉換為 Data
         var imageData: Data? = nil
         if let image = receiptImage {
             imageData = image.jpegData(compressionQuality: 0.7)
-            print("📸 imageData size: \(imageData?.count ?? 0) bytes")
         }
         
         let expense = Expense(
@@ -209,6 +275,12 @@ struct AddExpenseView: View {
             trip: trip,
             category: category
         )
+        
+            // ✅ 標記為 AI 處理過
+        if ocrResult != nil {
+            expense.isAIProcessed = true
+            expense.aiDetectionDate = Date()
+        }
         
         modelContext.insert(expense)
         trip.addExpense(expense)
