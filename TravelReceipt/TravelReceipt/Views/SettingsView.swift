@@ -39,7 +39,19 @@ struct SettingsView: View {
             Section("資料統計") {
                 LabeledContent("行程數量", value: "\(trips.count) 筆")
                 LabeledContent("費用數量", value: "\(expenses.count) 筆")
-                LabeledContent("總支出", value: formatAmount(totalExpenses) + " 元")
+                
+                if trips.isEmpty {
+                    Text("無行程")
+                        .foregroundStyle(.secondary)
+                } else {
+                    ForEach(trips) { trip in
+                        let tripTotal = trip.totalExpensesInPrimaryCurrency
+                        LabeledContent(
+                            trip.name.isEmpty ? "未命名行程" : trip.name,
+                            value: "\(String(format: "%.0f", tripTotal)) \(trip.primaryCurrency)"
+                        )
+                    }
+                }
             }
             
                 // MARK: - 資料管理
@@ -59,12 +71,6 @@ struct SettingsView: View {
                 Text("資料管理")
             } footer: {
                 Text("清除後無法復原，請謹慎操作")
-            }
-            
-                // MARK: - 關於
-            Section("關於") {
-                LabeledContent("版本", value: "1.0.0")
-                LabeledContent("開發者", value: "YiJou")
             }
         }
         .navigationTitle("設定")
@@ -93,16 +99,6 @@ struct SettingsView: View {
         .sheet(isPresented: $showingExportSheet) {
             ExportView(expenses: expenses)
         }
-    }
-    
-        // MARK: - Computed Properties
-    private var totalExpenses: Double {
-        expenses.reduce(0) { $0 + $1.amount }
-    }
-    
-        // MARK: - Methods
-    private func formatAmount(_ value: Double) -> String {
-        String(format: "%.0f", value)
     }
     
     private func deleteAllData() {
