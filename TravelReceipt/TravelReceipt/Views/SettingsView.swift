@@ -48,7 +48,7 @@ struct SettingsView: View {
                         let tripTotal = trip.totalExpensesInPrimaryCurrency
                         LabeledContent(
                             trip.name.isEmpty ? "未命名行程" : trip.name,
-                            value: "\(String(format: "%.0f", tripTotal)) \(trip.primaryCurrency)"
+                            value: "\(tripTotal.formattedAmount) \(trip.primaryCurrency)"
                         )
                     }
                 }

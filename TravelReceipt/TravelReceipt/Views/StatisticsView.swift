@@ -199,7 +199,7 @@ struct StatisticsView: View {
             
                 // ✅ 修復 2：顯示幣別
             HStack(alignment: .firstTextBaseline, spacing: 4) {
-                Text(formatAmount(totalAmount))
+                Text("\(totalAmount.formattedAmount)")
                     .font(.system(size: 36, weight: .bold))
                 Text(primaryCurrency)
                     .font(.headline)
@@ -317,8 +317,8 @@ struct StatisticsView: View {
                     
                     Spacer()
                     
-                        // ✅ 修復 3：分類明細也顯示幣別
-                    Text(formatAmount(item.amount) + " " + primaryCurrency)
+                        // ✅ 分類明細也顯示幣別
+                    Text("\(item.amount.formattedAmount)  \(primaryCurrency)")
                         .fontWeight(.medium)
                     
                     Text(formatPercentage(item.amount))
@@ -337,12 +337,7 @@ struct StatisticsView: View {
         .background(.gray.opacity(0.1))
         .clipShape(RoundedRectangle(cornerRadius: 16))
     }
-    
-        // MARK: - Helper Methods
-    private func formatAmount(_ value: Double) -> String {
-        String(format: "%.0f", value)
-    }
-    
+       
     private func formatPercentage(_ value: Double) -> String {
         guard totalAmount > 0 else { return "0%" }
         let percentage = (value / totalAmount) * 100

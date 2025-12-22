@@ -46,7 +46,7 @@ struct TripDetailView: View {
                 LabeledContent("天數", value: "\(trip.durationInDays) 天")
                 
                 if let budget = trip.totalBudget, budget > 0 {
-                    LabeledContent("預算", value: formatAmount(budget) + " " + trip.primaryCurrency)
+                    LabeledContent("預算", value: "\(budget.formattedAmount) \(trip.primaryCurrency)")
                 }
                 
                 if let notes = trip.notes, !notes.isEmpty {
@@ -57,13 +57,13 @@ struct TripDetailView: View {
                 // MARK: - 統計摘要
             Section("統計摘要") {
                     // ✅ 顯示幣別
-                LabeledContent("總支出", value: formatAmount(totalExpenses) + " " + trip.primaryCurrency)
+                LabeledContent("總支出", value: "\(totalExpenses.formattedAmount) \(trip.primaryCurrency)")
                 LabeledContent("費用筆數", value: "\(sortedExpenses.count) 筆")
                 
                 if let budget = trip.totalBudget, budget > 0 {
                     let remaining = budget - totalExpenses
                     LabeledContent("剩餘預算") {
-                        Text(formatAmount(remaining) + " " + trip.primaryCurrency)
+                        Text("\(remaining.formattedAmount) \( trip.primaryCurrency)")
                             .foregroundStyle(remaining >= 0 ? .green : .red)
                     }
                 }
@@ -76,7 +76,7 @@ struct TripDetailView: View {
                         let total = totalForCategory(category)
                         if total > 0 {
                             LabeledContent {
-                                Text(formatAmount(total) + " " + trip.primaryCurrency)
+                                Text("\(total.formattedAmount) \( trip.primaryCurrency)")
                             } label: {
                                 HStack {
                                     Text(category.icon)
@@ -148,13 +148,8 @@ struct TripDetailView: View {
             EditExpenseView(expense: expense)
         }
     }
-    
-        // MARK: - Helper Methods
-    private func formatAmount(_ value: Double) -> String {
-        String(format: "%.0f", value)
-    }
-    
-        // ✅ 修復 2：分類總計也要轉換貨幣
+       
+        // 分類總計也要轉換貨幣
     private func totalForCategory(_ category: ExpenseCategory) -> Double {
         sortedExpenses
             .filter { $0.category == category }
@@ -216,7 +211,7 @@ struct ExpenseRowView: View {
             VStack(alignment: .trailing, spacing: 2) {
                     // 原幣別金額
                 HStack(alignment: .firstTextBaseline, spacing: 4) {
-                    Text(String(format: "%.0f", expense.amount))
+                    Text("\(expense.amount.formattedAmount)")
                         .font(.subheadline)
                         .fontWeight(.semibold)
                     Text(expense.currency)
