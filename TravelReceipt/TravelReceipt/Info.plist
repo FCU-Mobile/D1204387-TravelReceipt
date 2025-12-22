@@ -2,6 +2,16 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>Key: NSPhotoLibraryUsageDescription
+   Type: String
+</key>
+	<string>需要訪問相簿以選擇費用憑證照片</string>
+	<key>NSCameraUsageDescription</key>
+	<string>需要使用相機拍照保存費用憑證</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict/>
+	</array>
 	<key>UIBackgroundModes</key>
 	<array/>
 </dict>

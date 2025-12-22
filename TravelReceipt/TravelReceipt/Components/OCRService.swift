@@ -79,27 +79,25 @@ class OCRService {
     
         // MARK: - 解析金額
     private static func parseAmount(from text: String) -> Double? {
-            // 常見金額格式
-        let patterns = [
-            #"總[計額]\s*[:：]?\s*\$?\s*([\d,]+\.?\d*)"#,      // 總計: $123 或 總額：123
-            #"合\s*計\s*[:：]?\s*\$?\s*([\d,]+\.?\d*)"#,       // 合計: 123
-            #"金\s*額\s*[:：]?\s*\$?\s*([\d,]+\.?\d*)"#,       // 金額: 123
-            #"NT\$?\s*([\d,]+\.?\d*)"#,                        // NT$123 或 NT 123
-            #"TWD\s*([\d,]+\.?\d*)"#,                          // TWD 123
-            #"實付\s*[:：]?\s*\$?\s*([\d,]+\.?\d*)"#,          // 實付: 123
-            #"應付\s*[:：]?\s*\$?\s*([\d,]+\.?\d*)"#,          // 應付: 123
-            #"小\s*計\s*[:：]?\s*\$?\s*([\d,]+\.?\d*)"#,       // 小計: 123
-            #"\$\s*([\d,]+\.?\d*)"#,                           // $123
-            #"([\d,]+)\s*元"#,                                 // 123元
+            // 🔴 第一步嚴格匹配「出租車專用」的金額關鍵詞
+        let strictPatterns = [
+            // 格式 1: 車資(Total, $): 285 或 車資（Total，$）：285
+            #"車資[（(]Total[，,]\s*\$\s*[）)]\s*[：:]\s*[\n\r]*\s*(\d+)"#,
+            
+            // 格式 2: 跳表金額(Fare, $): 285 或 跳表金額（Fare，$）：285
+            #"跳表金額[（(]Fare[，,]\s*\$\s*[）)]\s*[：:]\s*[\n\r]*\s*(\d+)"#,
         ]
         
-        for pattern in patterns {
-            if let regex = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive) {
+        
+        for (index, pattern) in strictPatterns.enumerated() {
+            print("  嘗試模式 \(index + 1): \(pattern)")
+            if let regex = try? NSRegularExpression(pattern: pattern, options: []) {
                 let range = NSRange(text.startIndex..., in: text)
-                if let match = regex.firstMatch(in: text, options: [], range: range) {
+                if let match = regex.firstMatch(in: text, range: range) {
                     if let amountRange = Range(match.range(at: 1), in: text) {
-                        let amountStr = String(text[amountRange]).replacingOccurrences(of: ",", with: "")
-                        if let amount = Double(amountStr), amount > 0 && amount < 1000000 {
+                        let amountStr = String(text[amountRange])
+                        if let amount = Double(amountStr), amount > 50 && amount < 10000 {
+                            print("  ✅ 找到: \(amount)")
                             return amount
                         }
                     }
@@ -107,7 +105,36 @@ class OCRService {
             }
         }
         
-            // 最後嘗試：找最大的合理數字
+            // 🟡 第二步：通用金額關鍵詞匹配
+        let generalPatterns = [
+            #"總[計額]\s*[:：]?\s*\$?\s*([\d,]+\.?\d*)"#,      // 總計: $123
+            #"合\s*計\s*[:：]?\s*\$?\s*([\d,]+\.?\d*)"#,       // 合計: 123
+            #"金\s*額\s*[:：]?\s*\$?\s*([\d,]+\.?\d*)"#,       // 金額: 123
+            #"實付\s*[:：]?\s*\$?\s*([\d,]+\.?\d*)"#,          // 實付: 123
+            #"應付\s*[:：]?\s*\$?\s*([\d,]+\.?\d*)"#,          // 應付: 123
+            #"小\s*計\s*[:：]?\s*\$?\s*([\d,]+\.?\d*)"#,       // 小計: 123
+            #"NT\$?\s*([\d,]+\.?\d*)"#,                        // NT$123
+            #"TWD\s*([\d,]+\.?\d*)"#,                          // TWD 123
+            #"\$\s*([\d,]+\.?\d*)"#,                           // $123
+            #"([\d,]+)\s*元"#,                                 // 123元
+        ]
+        
+        for pattern in generalPatterns {
+            if let regex = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive) {
+                let range = NSRange(text.startIndex..., in: text)
+                if let match = regex.firstMatch(in: text, options: [], range: range) {
+                    if let amountRange = Range(match.range(at: 1), in: text) {
+                        let amountStr = String(text[amountRange]).replacingOccurrences(of: ",", with: "")
+                        if let amount = Double(amountStr), amount > 10 && amount < 100000 {
+                            print("💰 識別金額: \(amount) (通用匹配)")
+                            return amount
+                        }
+                    }
+                }
+            }
+        }
+        
+            // 🟢 第三步：寬泛匹配（如果上面都失敗）
         let numberPattern = #"([\d,]+\.?\d*)"#
         if let regex = try? NSRegularExpression(pattern: numberPattern, options: []) {
             let range = NSRange(text.startIndex..., in: text)
@@ -117,16 +144,20 @@ class OCRService {
             for match in matches {
                 if let numRange = Range(match.range(at: 1), in: text) {
                     let numStr = String(text[numRange]).replacingOccurrences(of: ",", with: "")
-                    if let num = Double(numStr), num > 10 && num < 100000 {
+                    if let num = Double(numStr), num > 10 && num < 10000 {
                         amounts.append(num)
                     }
                 }
             }
             
-                // 回傳最大的金額（通常是總額）
-            return amounts.max()
+                // 返回最小的合理金额（通常在上面）
+            if let minAmount = amounts.min() {
+                print("💰 識別金額: \(minAmount) (寬泛匹配-最小值)")
+                return minAmount
+            }
         }
         
+        print("❌ 無法識別金額")
         return nil
     }
     
