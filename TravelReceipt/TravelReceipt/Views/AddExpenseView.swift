@@ -277,14 +277,6 @@ struct AddExpenseView: View {
         
         print("\n💾 開始保存費用...")
         
-//        var imageData: Data? = nil
-//        if let image = receiptImage {
-//            imageData = image.jpegData(compressionQuality: 0.7)
-//            print("✅ 照片已轉換為數據，大小: \(imageData?.count ?? 0) bytes")
-//        } else {
-//            print("⚠️  receiptImage 為 nil，但會嘗試保存")
-//        }
-
         print("🔍 receiptImageData: \(photoManager.receiptImageData != nil ? "✅ \(photoManager.receiptImageData!.count) bytes" : "❌ nil")")
         print("🔍 receiptImage: \(photoManager.receiptImage != nil ? "✅ 有" : "❌ nil")")
         
@@ -322,6 +314,12 @@ struct AddExpenseView: View {
         trip.addExpense(expense)
         
         print("✅ 費用已保存\n")
+        
+            // 寄送通知
+        NotificationService.shared.sendExpenseAddedNotification(
+            amount: Decimal(amountValue),
+            category: category.displayName
+        )
         
         dismiss()
     }
